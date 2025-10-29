@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>DevTech Academy - Gerenciamento de Alunos</title>
+</head>
+<body>
+  <h1>DevTech Academy - Cadastro de Alunos</h1>
+
+  <form id="formAluno">
+    <label>Nome:</label>
+    <input type="text" id="nome" required><br><br>
+
+    <label>Idade:</label>
+    <input type="number" id="idade" required><br><br>
+
+    <label>Curso:</label>
+    <select id="curso">
+      <option value="JavaScript">JavaScript</option>
+      <option value="Python">Python</option>
+      <option value="Java">Java</option>
+    </select><br><br>
+
+    <label>Nota Final:</label>
+   <input type="number" id="notaFinal" step="0.1" min="0" max="10" required>
+
+    <button type="submit">Cadastrar</button>
+  </form>
+
+  <h2>Lista de Alunos</h2>
+  <table border="1" id="tabelaAlunos">
+    <thead>
+      <tr>
+        <th>Nome</th>
+        <th>Idade</th>
+        <th>Curso</th>
+        <th>Nota Final</th>
+        <th>Aprovado?</th>
+        <th>Ações</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <h2>Relatórios</h2>
+  <button id="btnAprovados">Listar Aprovados</button>
+  <button id="btnMediaNotas">Média das Notas</button>
+  <button id="btnMediaIdades">Média das Idades</button>
+  <button id="btnOrdemAlfabetica">Ordem Alfabética</button>
+  <button id="btnQtdPorCurso">Qtd por Curso</button>
+
+  <div id="relatorios"></div>
+
+  <script>
+    class Aluno {
+      constructor(nome, idade, curso, notaFinal) {
+        this.nome = nome;
+        this.idade = parseInt(idade);
+        this.curso = curso;
+        this.notaFinal = parseFloat(notaFinal);
+      }
+
+      isAprovado() {
+        return this.notaFinal >= 7;
+      }
+
+      toString() {
+        return `${this.nome} - ${this.curso} (${this.notaFinal})`;
+      }
+    }
+
+    const alunos = [];
+    const form = document.getElementById('formAluno');
+    const tabela = document.getElementById('tabelaAlunos').querySelector('tbody');
+    const relatorios = document.getElementById('relatorios');
+    let indexEdicao = -1;
+
+    const renderTabela = () => {
+      tabela.innerHTML = '';
+      alunos.forEach((aluno, index) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${aluno.nome}</td>
+          <td>${aluno.idade}</td>
+          <td>${aluno.curso}</td>
+          <td>${aluno.notaFinal}</td>
+          <td>${aluno.isAprovado() ? 'Sim' : 'Não'}</td>
+          <td>
+            <button class="editar" data-index="${index}">Editar</button>
+            <button class="excluir" data-index="${index}">Excluir</button>
+          </td>
+        `;
+        tabela.appendChild(tr);
+      });
+    };
+
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const nome = document.getElementById('nome').value;
+      const idade = document.getElementById('idade').value;
+      const curso = document.getElementById('curso').value;
+      const notaFinal = document.getElementById('notaFinal').value;
+
+      if (indexEdicao === -1) {
+        alunos.push(new Aluno(nome, idade, curso, notaFinal));
+        alert('Aluno cadastrado com sucesso!');
+      } else {
+        alunos[indexEdicao] = new Aluno(nome, idade, curso, notaFinal);
+        alert('Aluno editado com sucesso!');
+        indexEdicao = -1;
+      }
+
+      form.reset();
+      renderTabela();
+    });
+
+    tabela.addEventListener('click', (e) => {
+      if (e.target.classList.contains('excluir')) {
+        const index = e.target.dataset.index;
+        alunos.splice(index, 1);
+        alert('Aluno excluído!');
+        renderTabela();
+      }
+
+      if (e.target.classList.contains('editar')) {
+        const index = e.target.dataset.index;
+        const aluno = alunos[index];
+        document.getElementById('nome').value = aluno.nome;
+        document.getElementById('idade').value = aluno.idade;
+        document.getElementById('curso').value = aluno.curso;
+        document.getElementById('notaFinal').value = aluno.notaFinal;
+        indexEdicao = index;
+      }
+    });
+
+    const btnAprovados = document.getElementById('btnAprovados');
+    const btnMediaNotas = document.getElementById('btnMediaNotas');
+    const btnMediaIdades = document.getElementById('btnMediaIdades');
+    const btnOrdemAlfabetica = document.getElementById('btnOrdemAlfabetica');
+    const btnQtdPorCurso = document.getElementById('btnQtdPorCurso');
+    const mostrar = (texto) => relatorios.innerHTML = `<p>${texto}</p>`;
+
+    btnAprovados.addEventListener('click', () => {
+      const aprovados = alunos.filter(a => a.isAprovado()).map(a => a.toString());
+      mostrar(`Aprovados: ${aprovados.join(', ') || 'Nenhum'}`);
+    });
+
+    btnMediaNotas.addEventListener('click', () => {
+      if (alunos.length === 0) return mostrar('Nenhum aluno cadastrado.');
+      const media = alunos.reduce((acc, a) => acc + a.notaFinal, 0) / alunos.length;
+      mostrar(`Média das notas: ${media.toFixed(2)}`);
+    });
+
+    btnMediaIdades.addEventListener('click', () => {
+      if (alunos.length === 0) return mostrar('Nenhum aluno cadastrado.');
+      const media = alunos.reduce((acc, a) => acc + a.idade, 0) / alunos.length;
+      mostrar(`Média das idades: ${media.toFixed(1)} anos`);
+    });
+
+    btnOrdemAlfabetica.addEventListener('click', () => {
+      const nomes = alunos.map(a => a.nome).sort();
+      mostrar(`Ordem alfabética: ${nomes.join(', ') || 'Nenhum'}`);
+    });
+
+    btnQtdPorCurso.addEventListener('click', () => {
+      const qtdPorCurso = alunos.reduce((acc, a) => {
+        acc[a.curso] = (acc[a.curso] || 0) + 1;
+        return acc;
+      }, {});
+      const texto = Object.entries(qtdPorCurso)
+        .map(([curso, qtd]) => `${curso}: ${qtd}`)
+        .join(' | ');
+      mostrar(`Quantidade por curso: ${texto || 'Nenhum'}`);
+    });
+  </script>
+</body>
+</html>
+
